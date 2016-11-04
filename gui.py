@@ -1,14 +1,17 @@
-try:
+
+try: #Python 2 imports
     import Tkinter as tk
     import ttk
     import tkFileDialog as filedialog
-except ImportError:
+    from HTMLParser import HTMLParser
+    
+except ImportError: #Python 3 imports
     import tkinter as tk
     from tkinter import ttk
     from tkinter import filedialog
+    from html.parser import HTMLParser
 
-import os
-import urllib2    
+import os    
 import FunKiiU as fnku
 import json
 import zipfile
@@ -18,11 +21,15 @@ from AutoComplete import AutocompleteCombobox
 urlopen=fnku.urlopen
 URLError=fnku.URLError
 HTTPError=fnku.HTTPError
-
 PhotoImage=tk.PhotoImage
 
-__VERSION__="2.0.1"
+__VERSION__="2.0.3"
 targetversion="FunKiiU v2.2"
+
+### I'm getting about 80 titles not parsing from titlekeys.json
+### properly. To see the error output, set DEBUG = True. The
+### parsing code is found in load_title_data beginning on line 337.
+DEBUG = False
 
 if os.name == 'nt':
     dir_slash = "\\"
@@ -33,6 +40,23 @@ try:
 except:
     fnku.__VERSION__ = "?"
 
+
+class VersionParser(HTMLParser):
+    fnku_data_set=[]
+    gui_data_set=[]
+    
+    def handle_starttag(self, tag, attrs):
+        fnku_data_set=[]
+        gui_data_set=[]
+        if tag == "a":
+            for name, value in attrs:
+                if name == "href":
+                    if value.startswith("/llakssz") and value.endswith(".zip"):
+                        self.fnku_data_set.append(value)
+                    elif value.startswith("/dojafoja") and value.endswith(".zip"):
+                        self.gui_data_set.append(value)
+
+                
 class RootWindow(tk.Tk):
     def __init__(self,*args,**kwargs):
         tk.Tk.__init__(self)
@@ -264,9 +288,8 @@ class RootWindow(tk.Tk):
                 x=i.split("/")[1]
                 if x!='':
                     with open(x,'wb') as p_file:
-                        p_file.write(data)
-                        
-            zfile.close()
+                        p_file.write(data)                      
+            zfile.close()           
             return True
         
         except Exception as e:
@@ -276,24 +299,19 @@ class RootWindow(tk.Tk):
     def download_zip(self,url):
         try:
             z = urlopen(url)
-            print('Downloading ', url)
-        
+            print('Downloading ', url)      
             with open('update.zip', "wb") as f:
                 f.write(z.read())
             print('\nDone.')
             
-
         except HTTPError as e:
             print("Error:", e.code, url)
         except URLError as e:
             print ("Error:", e.reason, url)
-            
-
-
-       
+                   
     def populate_selection_box(self):
         keysite = fnku.get_keysite()
-
+        
         print(u'Downloading/updating data from {0}'.format(keysite))
 
         if not fnku.download_file('https://{0}/json'.format(keysite), 'titlekeys.json', 3):
@@ -307,7 +325,6 @@ class RootWindow(tk.Tk):
 
     def selection_box_changed(self,*args):
         user_selected=self.selection_box.get().split('--')[0].strip()
-        print(user_selected)
         for i in self.title_data:
             if i[0] == user_selected:
                 titleid=i[1]
@@ -317,7 +334,6 @@ class RootWindow(tk.Tk):
                 self.id_box.insert('end',titleid)
                 if key != 'None': self.key_box.insert('end',key)
     
-
     def load_title_data(self):
         try:
             print('Now parsing titlekeys.json')
@@ -342,14 +358,14 @@ class RootWindow(tk.Tk):
                 #Some entries in titlekeys.json are invalid,or just not encoding right, or I'm doing something wrong.
                 #Passing errors silently for now.
                 except Exception as e:
-                    pass 
-                    #print('ERROR LOADING ',e)
-                    #self.errors+=1
-        #print(str(self.errors)+' Titles did not load correctly.')
-        #return title_data
+                    pass
+                    if DEBUG:
+                        print('ERROR LOADING ',e)
+                        errors+=1
         except IOError:
             print('No titlekeys.json file was found. The selection box will be empty')
-
+        if DEBUG: print(str(errors)+' Titles did not load correctly.')
+         
     def sanity_check_input(self,val,chktype):
         try:
             if chktype == 'title':
@@ -426,40 +442,26 @@ class RootWindow(tk.Tk):
         print('Checking for program updates, this might take a second or two.......\n')
         url1=self.versions['fnku_url']
         url2=self.versions['gui_url']    
-        response = urllib2.urlopen(url1).read()
-        fnku_data_set = []
-        gui_data_set = []
-        while True:
-            curpos = response.find("href")
-            if curpos >= 0:
-                response_length = len(response)
-                response = response[curpos:response_length]
-                curpos = response.find('"')
-                response_length = len(response)
-                response = response[curpos+1:response_length]
-                curpos = response.find('"')
-                data = response[0:curpos]
-                if data.startswith("/llakssz") and data.endswith(".zip"):
-                    fnku_data_set.append(data)                                                            
-            else:
-                break
-            
-        response = urllib2.urlopen(url2).read()        
-        while True:
-            curpos = response.find("href")
-            if curpos >= 0:
-                response_length = len(response)
-                response = response[curpos:response_length]
-                curpos = response.find('"')
-                response_length = len(response)
-                response = response[curpos+1:response_length]
-                curpos = response.find('"')
-                data = response[0:curpos]
-                if data.startswith("/dojafoja") and data.endswith(".zip"):
-                    gui_data_set.append(data)
-            else:
-                break
-            
+        response = urlopen(url1)
+        rslts=response.read()
+        rslts=str(rslts)
+        x=''
+        for i in rslts:
+            x=x+i
+        parser = VersionParser()
+        parser.feed(x)
+        response = urlopen(url2)
+        rslts=response.read()
+        rslts=str(rslts)
+        x=''
+        for i in rslts:
+            x=x+i
+        parser = VersionParser()
+        parser.feed(x)
+
+        fnku_data_set = parser.fnku_data_set
+        gui_data_set = parser.gui_data_set
+        
         fnku_all=[]
         fnku_newest=''
         gui_all=[]
@@ -480,7 +482,6 @@ class RootWindow(tk.Tk):
         self.versions['gui_all']=gui_all
         self.versions['gui_new']=gui_newest
         
-
     def download_clicked(self,dl_method):
         title_list=[]
         key_list=[]
@@ -499,7 +500,6 @@ class RootWindow(tk.Tk):
                 if not i[1] in key_list:
                     key_list.append(i[1])
         if dl_method == 1:
-            print(title_list)
             fnku.main(titles=title_list,keys=key_list,onlinetickets=True,output_dir=output_dir,retry_count=retry_count,
                      patch_demo=patch_demo,patch_dlc=patch_dlc,tickets_only=tickets_only,simulate=simulate)
         elif dl_method == 2:

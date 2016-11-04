@@ -13,7 +13,7 @@ import sys
 import os
 try:
     import tkinter
-    import tkinter.ttk
+    from tkinter import ttk
 except ImportError:
     import Tkinter as tkinter
     import ttk
