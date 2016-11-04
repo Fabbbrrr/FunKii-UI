@@ -284,7 +284,7 @@ class RootWindow(tk.Tk):
             dest=cwd+dir_slash+zip_name
             zfile=zipfile.ZipFile(dest,'r')
             for i in zfile.namelist():
-                data=zfile.read(i,cwd)
+                data=zfile.read(i,None)
                 x=i.split("/")[1]
                 if x!='':
                     with open(x,'wb') as p_file:
