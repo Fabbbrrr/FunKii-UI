@@ -21,7 +21,7 @@ HTTPError=fnku.HTTPError
 
 PhotoImage=tk.PhotoImage
 
-__VERSION__="2.0"
+__VERSION__="2.0.1"
 targetversion="FunKiiU v2.2"
 
 if os.name == 'nt':
@@ -284,9 +284,9 @@ class RootWindow(tk.Tk):
             
 
         except HTTPError as e:
-            print "Error:", e.code, url
+            print("Error:", e.code, url)
         except URLError as e:
-            print "Error:", e.reason, url
+            print ("Error:", e.reason, url)
             
 
 
