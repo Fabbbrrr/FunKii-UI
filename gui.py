@@ -23,7 +23,7 @@ URLError=fnku.URLError
 HTTPError=fnku.HTTPError
 PhotoImage=tk.PhotoImage
 
-__VERSION__="2.0.5"
+__VERSION__="2.0.6"
 targetversion="FunKiiU v2.2"
 
 ### I'm getting about 80 titles not parsing from titlekeys.json
