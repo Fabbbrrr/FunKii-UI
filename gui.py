@@ -383,6 +383,7 @@ class RootWindow(tk.Tk):
         
     def add_to_list(self):
         titleid = self.id_box.get().strip()
+        name = self.selection_box.get().strip()
         if self.sanity_check_input(titleid,'title'):
             pass
         else:
@@ -396,7 +397,7 @@ class RootWindow(tk.Tk):
             else:
                 print('Bad Key. Must be a 16 digit hexadecimal.')
                 return
-        entry=(titleid,key)
+        entry=(name,titleid,key)
         if not entry in self.download_list: self.download_list.append(entry)
         self.populate_dl_listbox()
 
@@ -494,11 +495,11 @@ class RootWindow(tk.Tk):
         tickets_only=self.tickets_only.get()
         simulate=self.simulate_mode.get()
         for i in self.download_list:
-            if not i[0] in title_list:
-                title_list.append(i[0])
-            if i[1]:
-                if not i[1] in key_list:
-                    key_list.append(i[1])
+            if not i[1] in title_list:
+                title_list.append(i[1])
+            if i[2]:
+                if not i[2] in key_list:
+                    key_list.append(i[2])
         if dl_method == 1:
             fnku.main(titles=title_list,keys=key_list,onlinetickets=True,output_dir=output_dir,retry_count=retry_count,
                      patch_demo=patch_demo,patch_dlc=patch_dlc,tickets_only=tickets_only,simulate=simulate)
